@@ -1,26 +1,21 @@
 import React from 'react';
-import Button from '@mui/material/Button';
-import { firestoreDb } from './firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import CreateNewMatch from './views/CreateNewMatch';
+import RecurringPlayers from './views/RecurringPlayers';
+import PastMatches from './views/PastMatches';
+import Home from './views/Home';
 
 const App: React.FC = () => {
-  const handleClick = async () => {
-    try {
-      const docRef = await addDoc(collection(firestoreDb, "teams"), {
-        name: "Example Football Team"
-      });
-      console.log("Document written with ID: ", docRef.id);
-    } catch (error) {
-      console.error("Error adding document: ", error);
-    }
-  };
 
   return (
-    <div className="App">
-      <Button variant="contained" color="primary" onClick={handleClick}>
-        Add Team
-      </Button>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/recurring-players" element={<RecurringPlayers />} />
+        <Route path="/past-matches" element={<PastMatches />} />
+        <Route path="/create-new-match" element={<CreateNewMatch />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
