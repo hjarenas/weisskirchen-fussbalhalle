@@ -1,24 +1,25 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import Button from '@mui/material/Button';
+import { firestoreDb } from './firebase';
+import { addDoc, collection } from 'firebase/firestore';
 
-function App() {
+const App: React.FC = () => {
+  const handleClick = async () => {
+    try {
+      const docRef = await addDoc(collection(firestoreDb, "teams"), {
+        name: "Example Football Team"
+      });
+      console.log("Document written with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Button variant="contained" color="primary" onClick={handleClick}>
+        Add Team
+      </Button>
     </div>
   );
 }
