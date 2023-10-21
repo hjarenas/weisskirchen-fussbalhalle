@@ -1,7 +1,7 @@
 import React from 'react';
 
-const CreateNewMatch: React.FC = () => {
+const CreateNewMatchView: React.FC = () => {
   return <div>Create New Match Page</div>;
 };
 
-export default CreateNewMatch;
+export default CreateNewMatchView;
