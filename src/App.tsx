@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import CreateNewMatchView from './views/CreateNewMatchView';
+import CreateNewMatchView from './views/CreateMatch';
 import RecurringPlayersView from './views/RecurringPlayersView';
 import PastMatches from './views/PastMatches';
 import Home from './views/Home';
@@ -31,7 +31,7 @@ const App: React.FC = () => {
         <Toolbar />
         <Sidebar />
       </Drawer>
-      <main style={{ marginLeft: 240 }}>
+      <main style={{ marginLeft: 250, marginTop: 10 }}>
         <Toolbar />
         <Routes>
           <Route path="/" element={<Home />} />
