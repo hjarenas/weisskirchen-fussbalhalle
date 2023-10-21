@@ -1,0 +1,7 @@
+/* RecurringPlayersView.module.css */
+
+/* duplicate classname to fix specificity problem from material */
+.addButton.addButton {
+  margin-top: 20px;
+  float: right;
+}
