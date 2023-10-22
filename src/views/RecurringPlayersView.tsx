@@ -1,16 +1,16 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
-import { collection, getDocs, query, orderBy, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Player } from '../types/Player';
 import { firestoreDb } from '../firebase';
 import styles from './RecurringPlayersView.module.css';
+import AddPlayerDialog from '../components/AddPlayerDialog';
 
 const RecurringPlayersView: React.FC = () => {
   const [players, setPlayers] = React.useState<Player[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [open, setOpen] = React.useState(false);
-  const [playerName, setPlayerName] = React.useState('');
+  const [showDialog, setShowDialog] = React.useState(false);
   const currentYear = new Date().getFullYear();
 
   React.useEffect(() => {
@@ -23,12 +23,12 @@ const RecurringPlayersView: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleOpen = () => {
-    setOpen(true);
+  const handleShowDialog = () => {
+    setShowDialog(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const closeDialog = () => {
+    setShowDialog(false);
   };
 
   const fetchPlayersForCurrentYear = async (): Promise<Player[]> => {
@@ -46,16 +46,9 @@ const RecurringPlayersView: React.FC = () => {
 
     return players;
   };
-  const handleAddPlayer = async () => {
-    const playersRef = collection(firestoreDb, 'players');
-    await addDoc(playersRef, {
-      name: playerName,
-      stats: {} // Initial empty stats
-    });
-
-    setPlayerName(''); // Reset the input field
-    handleClose(); // Close the modal
-    // Optionally, refresh the player list or add the new player to the local state
+  const handlePlayerAdded = async () => {
+    const data = await fetchPlayersForCurrentYear();
+    setPlayers(data);
   };
 
   return (
@@ -67,33 +60,12 @@ const RecurringPlayersView: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={handleOpen}
+            onClick={handleShowDialog}
             className={styles.addButton}
             startIcon={<AddIcon />}>
             Add New Player
           </Button>
-          <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Add New Player</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Player Name"
-                type="text"
-                fullWidth
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="primary">
-                Cancel
-              </Button>
-              <Button onClick={handleAddPlayer} color="primary">
-                Add
-              </Button>
-            </DialogActions>
-          </Dialog>
+          <AddPlayerDialog open={showDialog} onClose={closeDialog} onPlayerAdded={handlePlayerAdded} />
           <Table>
             <TableHead>
               <TableRow>

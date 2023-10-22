@@ -6,6 +6,7 @@ import { firestoreDb } from "../../firebase";
 import { Button, Container, Grid, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
+import AddPlayerDialog from "../../components/AddPlayerDialog";
 
 
 
@@ -16,6 +17,7 @@ interface Props {
 const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatchState }) => {
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -59,12 +61,17 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatchSta
     setCurrentMatchState(currentMatch.state);
   };
 
+  function handlePlayerAdded(newPlayer: Player): void {
+    selectedPlayers.push(newPlayer);
+  }
+
   return (
     <Container>
+      <AddPlayerDialog open={showDialog} onClose={() => setShowDialog(false)} onPlayerAdded={handlePlayerAdded} />
       {/* First Row: Buttons */}
       <Grid container spacing={3} justifyContent="space-between">
         <Grid item>
-          <Button variant="contained" color="secondary">
+          <Button variant="contained" color="secondary" onClick={() => setShowDialog(true)}>
             Add Player
           </Button>
         </Grid>
