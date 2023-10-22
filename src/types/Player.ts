@@ -10,6 +10,7 @@ export interface PlayerStats {
 }
 
 export interface Player {
+  id?: string;
   name: string;
   stats: {
     [year: string]: PlayerStats;

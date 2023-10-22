@@ -1,4 +1,7 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface SimplePlayer {
+  id: string;
   name: string;
 }
 
@@ -9,20 +12,28 @@ export enum Team {
 
 export enum MatchState {
   ChoosingPlayers,
-  PreparingMatch,
+  ChoosingTeams,
   MatchStarted,
   MatchEnded
 }
 
-export interface Match {
+interface BaseMatch {
   id?: string;
-  date: Date;
   redTeam: SimplePlayer[];
   yellowTeam: SimplePlayer[];
+  unassignedPlayers: SimplePlayer[];
   score: {
     red: number;
     yellow: number;
   };
   winner: Team;
   state: MatchState;
+}
+export interface Match extends BaseMatch {
+
+  date: Date;
+}
+
+export interface FirestoreMatch extends BaseMatch {
+  date: Timestamp;
 }

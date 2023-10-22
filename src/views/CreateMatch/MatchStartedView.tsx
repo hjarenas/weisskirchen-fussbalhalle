@@ -7,7 +7,7 @@ const MatchStartedView: React.FC<Props> = ({ onEndMatch }) => {
 
   return (
     <div>
-      {/* ... your component UI ... */}
+      {/* ... your component UI ... */}``
       <button onClick={onEndMatch}>Next</button>
     </div>
   );

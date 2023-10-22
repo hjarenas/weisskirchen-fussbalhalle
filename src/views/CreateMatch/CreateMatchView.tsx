@@ -25,6 +25,7 @@ const CreateMatchView: React.FC<CreateMatchFormProps> = ({ setMatch }) => {
       date: matchDate?.toDate() ?? new Date(),
       redTeam: [],
       yellowTeam: [],
+      unassignedPlayers: [],
       score: {
         red: 0,
         yellow: 0,

@@ -3,82 +3,79 @@ import ChoosingPlayersView from './ChoosingPlayersView';
 import ChoosingTeamsView from './ChoosingTeamsView';
 import MatchStartedView from './MatchStartedView';
 import { firestoreDb } from '../../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { Match, MatchState } from '../../types/Match';
-import { List, ListItemText, ListItemButton } from '@mui/material';
+import { collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { FirestoreMatch, Match, MatchState } from '../../types/Match';
+import { Button, List, ListItem } from '@mui/material';
 import CreateMatchView from './CreateMatchView';
-
-
-enum MatchesState {
-  ExistingMatches,
-  NoMatch,
-  MatchChosen
-}
+import { fromFirestoreMatch } from '../../utils/firestoreUtils';
+import ExistingMatchCardView from './ExistingMatchCardView';
 
 
 const CreateMatch: React.FC = () => {
-  const [currentMatchState, setCurrentMatchState] = useState(MatchesState.NoMatch);
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
+  const [currentMatchState, setCurrentMatchState] = useState<MatchState | null>(null); // Replace any with your match type
+  const [forceCreateMatch, setForceCreateMatch] = useState(false);
   const [existingMatches, setExistingMatches] = useState<Match[]>([]); // Replace any with your match type
 
   useEffect(() => {
     const fetchMatches = async () => {
       const matchesRef = collection(firestoreDb, 'matches');
-      const noMatchQuery = query(matchesRef, where('state', '==', 'NoMatch'));
+      const noMatchQuery = query(matchesRef, where('state', '!=', MatchState.MatchEnded));
       const querySnapshot = await getDocs(noMatchQuery);
 
       const matches: Match[] = []; // Replace any with your match type
       querySnapshot.forEach((doc) => {
-        matches.push(doc.data() as Match);
+        const firestoreMatch = doc.data() as FirestoreMatch;
+        const match = fromFirestoreMatch(firestoreMatch);
+        match.id = doc.id;
+        matches.push(match);
       });
 
-      if (matches.length > 1) {
-        setExistingMatches(matches);
-        setCurrentMatchState(MatchesState.ExistingMatches);
-      }
+      setExistingMatches(matches);
     };
-
     fetchMatches();
   }, []);
 
-  const navigateToMatch = (match: Match) => {
-    // Here, I'm assuming you'll navigate to a route with the match date as a parameter.
-    // You can adjust this based on your routing setup.
-    setCurrentMatch(match);
-    setCurrentMatchState(MatchesState.MatchChosen);
-  };
+  const deleteMatch = async (match: Match) => {
+    const matchRef = doc(collection(firestoreDb, 'matches'), match.id!);
+    await deleteDoc(matchRef);
+    setExistingMatches(prevMatches => prevMatches.filter(m => m.id !== match.id));
+  }
 
-  if (currentMatchState === MatchesState.ExistingMatches) {
+  const handleMatchChosen = (match: Match) => {
+    setCurrentMatch(match);
+    setCurrentMatchState(match.state);
+    setForceCreateMatch(false);
+  }
+
+  if (!currentMatch && !forceCreateMatch && existingMatches?.length > 0) {
     return (
       <div>
         <h2>Select an existing match</h2>
         <List>
           {existingMatches.map((match) => (
-            <ListItemButton key={match.date.toISOString()} onClick={() => navigateToMatch(match)}>
-              <ListItemText
-                primary={`Match on ${match.date.toLocaleDateString()}`}
-                secondary={`Score: ${match.score.red} - ${match.score.yellow}`}
-              />
-            </ListItemButton>
+            <ListItem key={match.id}>
+              <ExistingMatchCardView match={match} selectMatch={handleMatchChosen} deleteMatch={deleteMatch} />
+            </ListItem>
           ))}
         </List>
+        <h2>Or</h2>
+        <Button color="primary" variant="contained" onClick={() => setForceCreateMatch(true)}>Create a new match</Button>
       </div>
     );
   }
+  else if (!currentMatch || forceCreateMatch) {
 
-  else if (currentMatchState === MatchesState.NoMatch) {
-    return <CreateMatchView setMatch={setCurrentMatch} />;
+    return <CreateMatchView setMatch={handleMatchChosen} />;
   }
 
-  debugger;
-  switch (currentMatch?.state) {
+  switch (currentMatchState) {
     case MatchState.ChoosingPlayers:
-      return <ChoosingPlayersView currentMatch={currentMatch} />;
-    case MatchState.PreparingMatch:
+      return <ChoosingPlayersView currentMatch={currentMatch} setCurrentMatchState={setCurrentMatchState} />;
+    case MatchState.ChoosingTeams:
       return <ChoosingTeamsView currentMatch={currentMatch} />;
     case MatchState.MatchStarted:
-      return <MatchStartedView onEndMatch={() => setCurrentMatchState(MatchesState.NoMatch)} />;
-
+      return <MatchStartedView onEndMatch={() => null} />;
     default:
       return <div>Invalid state</div>;
   }
