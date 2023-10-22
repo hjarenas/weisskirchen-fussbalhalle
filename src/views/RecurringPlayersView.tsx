@@ -35,7 +35,6 @@ const RecurringPlayersView: React.FC = () => {
     const currentYear = new Date().getFullYear().toString();
     const playersRef = collection(firestoreDb, 'players');
     const q = query(playersRef, orderBy(`stats.${currentYear}.matchesPlayed`, 'desc'));
-    debugger;
     const querySnapshot = await getDocs(q);
 
     const players: Player[] = [];

@@ -15,18 +15,15 @@ import {
 } from '@mui/material';
 import { Goal, Match, SimplePlayer, Team } from '../types/Match';
 import React from 'react';
-import { firestoreDb } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { debug } from 'console';
 
 interface AddGoalDialogProps {
   match: Match;
   open: boolean;
   onClose: () => void;
-  onGoalAdded: () => void; // Define a Goal type
+  handleGoalAdded: (goal: Goal) => void; // Define a Goal type
 }
 
-const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, onGoalAdded }) => {
+const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, handleGoalAdded }) => {
   const [selectedTeam, setSelectedTeam] = React.useState<Team | null>(null);
   const [scorer, setScorer] = React.useState<SimplePlayer | null>(null);
   const [assister, setAssister] = React.useState<SimplePlayer | null>(null);
@@ -40,23 +37,23 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, onG
         assister: assister ?? undefined,
         ownGoal,
       };
-
-      match.goals.push(goal);
-      match.score[selectedTeam] += 1;
-
-
-      const matchRef = doc(firestoreDb, 'matches', match.id!);
-      await updateDoc(matchRef, {
-        goals: match.goals,
-        score: match.score
-      });
-
-      onGoalAdded();
+      handleGoalAdded(goal);
     }
   };
 
+  const handleScorerChanged = (id: string): void => {
+    const player = availablePlayers().find(p => p.id === id);
+    if (player)
+      setScorer(player);
+  }
+
+  const handleAssisterChanged = (id: string): void => {
+    const player = availablePlayers().find(p => p.id === id);
+    if (player)
+      setAssister(player);
+  }
+
   const availablePlayers = (): SimplePlayer[] => {
-    debugger;
     if (!ownGoal)
       return selectedTeam === Team.RED ? match.redTeam : match.yellowTeam;
     else
@@ -80,8 +77,8 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, onG
         <FormControl fullWidth>
           <InputLabel>Scorer</InputLabel>
           <Select
-            value={scorer}
-            onChange={(e) => setScorer(e.target.value as SimplePlayer)}
+            value={scorer?.id}
+            onChange={(e) => handleScorerChanged(e.target.value as string)}
           >
             {availablePlayers().map((player) => (
               <MenuItem key={player.id} value={player.id}>
@@ -95,8 +92,8 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, onG
           <FormControl fullWidth>
             <InputLabel>Assister</InputLabel>
             <Select
-              value={assister}
-              onChange={(e) => setAssister(e.target.value as SimplePlayer)}
+              value={assister?.id}
+              onChange={(e) => handleAssisterChanged(e.target.value as string)}
             >
               {availablePlayers().map((player) => (
                 <MenuItem key={player.id} value={player.id}>

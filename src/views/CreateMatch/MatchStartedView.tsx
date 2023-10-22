@@ -2,18 +2,38 @@ import React, { useState } from 'react';
 import { Button, Typography, List, ListItem, ListItemText, Grid } from '@mui/material';
 import AddGoalDialog from '../../components/AddGoalDialog';
 import { Match, Goal, Team } from '../../types/Match';
+import { firestoreDb } from '../../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface MatchStartedViewProps {
-  match: Match;
+  initialMatch: Match;
   onMatchCompleted: () => void;
 }
 
-const MatchStartedView: React.FC<MatchStartedViewProps> = ({ match, onMatchCompleted }) => {
+const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, onMatchCompleted }) => {
+  const [match, setMatch] = useState<Match>(initialMatch);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleGoalAdded = () => {
-    // Refresh the match data or update the local state if necessary
+  const handleGoalAdded = async (goal: Goal) => {
     setDialogOpen(false);
+    // Refresh the match data or update the local state if necessary
+    const updates = {
+      goals: [...match.goals, goal],
+      score: {
+        ...match.score,
+        [goal.team]: match.score[goal.team] + 1
+      }
+    };
+
+    const updatedMatch = {
+      ...match,
+      ...updates
+    };
+
+    const matchRef = doc(firestoreDb, 'matches', match.id!);
+    await updateDoc(matchRef, updates);
+
+    setMatch(updatedMatch);
   };
 
   return (
@@ -47,7 +67,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ match, onMatchCompl
         <Button variant="contained" color="primary" onClick={() => setDialogOpen(true)}>Add Goal</Button>
         <Button variant="contained" color="secondary" onClick={onMatchCompleted}>Complete Match</Button>
       </Grid>
-      <AddGoalDialog match={match} open={dialogOpen} onClose={() => setDialogOpen(false)} onGoalAdded={handleGoalAdded} />
+      <AddGoalDialog match={match} open={dialogOpen} onClose={() => setDialogOpen(false)} handleGoalAdded={handleGoalAdded} />
     </Grid>
   );
 };
