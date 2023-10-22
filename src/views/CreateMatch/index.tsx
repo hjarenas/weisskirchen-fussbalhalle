@@ -73,7 +73,7 @@ const CreateMatch: React.FC = () => {
     case MatchState.ChoosingPlayers:
       return <ChoosingPlayersView currentMatch={currentMatch} setCurrentMatchState={setCurrentMatchState} />;
     case MatchState.ChoosingTeams:
-      return <ChoosingTeamsView currentMatch={currentMatch} />;
+      return <ChoosingTeamsView currentMatch={currentMatch} setCurrentMatchState={setCurrentMatchState} />;
     case MatchState.MatchStarted:
       return <MatchStartedView onEndMatch={() => null} />;
     default:
