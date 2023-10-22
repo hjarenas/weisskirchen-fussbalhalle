@@ -6,8 +6,8 @@ export interface SimplePlayer {
 }
 
 export enum Team {
-  RED = 'RED',
-  YELLOW = 'YELLOW',
+  RED = 'red',
+  YELLOW = 'yellow',
 }
 
 export enum MatchState {
@@ -15,6 +15,13 @@ export enum MatchState {
   ChoosingTeams,
   MatchStarted,
   MatchEnded
+}
+
+export interface Goal {
+  team: Team;
+  scorer: SimplePlayer;
+  ownGoal: boolean;
+  assister?: SimplePlayer;
 }
 
 interface BaseMatch {
@@ -26,6 +33,7 @@ interface BaseMatch {
     red: number;
     yellow: number;
   };
+  goals: Goal[];
   winner: Team;
   state: MatchState;
 }

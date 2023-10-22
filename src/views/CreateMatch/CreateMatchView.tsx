@@ -30,6 +30,7 @@ const CreateMatchView: React.FC<CreateMatchFormProps> = ({ setMatch }) => {
         red: 0,
         yellow: 0,
       },
+      goals: [],
       winner: Team.RED, // You can set a default or leave it out if it's optional
       state: MatchState.ChoosingPlayers,
     };

@@ -10,10 +10,10 @@ import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 
 type ChoosingTeamsViewProps = {
   currentMatch: Match;
-  setCurrentMatchState: (state: MatchState) => void;
+  setCurrentMatch: (currentMatch: Match) => void;
 };
 
-const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, setCurrentMatchState }) => {
+const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, setCurrentMatch }) => {
   const [redTeam, setRedTeam] = useState<SimplePlayer[]>([]);
   const [yellowTeam, setYellowTeam] = useState<SimplePlayer[]>([]);
   // Inside ChoosingTeamsView component
@@ -38,12 +38,19 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, set
   };
 
   async function updateStateAndInformParent(newState: MatchState): Promise<void> {
-    currentMatch.state = newState;
+    const updates = {
+      state : newState,
+      redTeam : redTeam,
+      yellowTeam : yellowTeam,
+      unassignedPlayers : [],
+    };
+    const updatedMatch = {
+      ...currentMatch,
+      ...updates
+    };
     const matchRef = doc(firestoreDb, 'matches', currentMatch.id!);
-    await updateDoc(matchRef, {
-      state: currentMatch.state
-    });
-    setCurrentMatchState(currentMatch.state);
+    await updateDoc(matchRef, updates);
+    setCurrentMatch(updatedMatch);
   }
 
   async function onStartMatch(): Promise<void> {

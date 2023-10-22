@@ -12,9 +12,9 @@ import AddPlayerDialog from "../../components/AddPlayerDialog";
 
 interface Props {
   currentMatch: Match;
-  setCurrentMatchState: (state: MatchState) => void;
+  setCurrentMatch: (match: Match) => void;
 }
-const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatchState }) => {
+const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch }) => {
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -51,14 +51,19 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatchSta
   };
 
   const handleConfirmSelection = async () => {
+    const updates = {
+      unassignedPlayers: selectedPlayers.map(p => p as SimplePlayer),
+      state: MatchState.ChoosingTeams
+    }
+    const updatedMatch = {
+      ...currentMatch,
+      ...updates
+    };
     currentMatch.unassignedPlayers = selectedPlayers.map(p => p as SimplePlayer);
     currentMatch.state = MatchState.ChoosingTeams;
     const matchRef = doc(firestoreDb, 'matches', currentMatch.id!);
-    await updateDoc(matchRef, {
-      unassignedPlayers: selectedPlayers,
-      state: MatchState.ChoosingTeams
-    });
-    setCurrentMatchState(currentMatch.state);
+    await updateDoc(matchRef, updates);
+    setCurrentMatch(updatedMatch);
   };
 
   function handlePlayerAdded(newPlayer: Player): void {

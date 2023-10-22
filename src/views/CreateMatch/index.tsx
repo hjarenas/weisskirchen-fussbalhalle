@@ -65,17 +65,16 @@ const CreateMatch: React.FC = () => {
     );
   }
   else if (!currentMatch || forceCreateMatch) {
-
     return <CreateMatchView setMatch={handleMatchChosen} />;
   }
 
-  switch (currentMatchState) {
+  switch (currentMatch.state) {
     case MatchState.ChoosingPlayers:
-      return <ChoosingPlayersView currentMatch={currentMatch} setCurrentMatchState={setCurrentMatchState} />;
+      return <ChoosingPlayersView currentMatch={currentMatch} setCurrentMatch={setCurrentMatch} />;
     case MatchState.ChoosingTeams:
-      return <ChoosingTeamsView currentMatch={currentMatch} setCurrentMatchState={setCurrentMatchState} />;
+      return <ChoosingTeamsView currentMatch={currentMatch} setCurrentMatch={setCurrentMatch} />;
     case MatchState.MatchStarted:
-      return <MatchStartedView onEndMatch={() => null} />;
+      return <MatchStartedView match={currentMatch} onMatchCompleted={() => null} />;
     default:
       return <div>Invalid state</div>;
   }
