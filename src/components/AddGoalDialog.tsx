@@ -14,7 +14,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import { Goal, Match, SimplePlayer, Team } from '../types/Match';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface AddGoalDialogProps {
   match: Match;
@@ -24,10 +24,27 @@ interface AddGoalDialogProps {
 }
 
 const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, handleGoalAdded }) => {
-  const [selectedTeam, setSelectedTeam] = React.useState<Team | null>(null);
+  const [selectedTeam, setSelectedTeam] = React.useState<Team>(Team.RED);
   const [scorer, setScorer] = React.useState<SimplePlayer | null>(null);
   const [assister, setAssister] = React.useState<SimplePlayer | null>(null);
   const [ownGoal, setOwnGoal] = React.useState(false);
+  const [availablePlayers, setAvailablePlayers] = React.useState<SimplePlayer[]>([]);
+
+  useEffect(() => {
+    // Reset the values when the team changes
+    const scorer = availablePlayers?.length > 0 ? availablePlayers[0] : null;
+    const assister = availablePlayers?.length > 1 ? availablePlayers[1] : null;
+    setScorer(scorer);
+    setAssister(assister);
+  }, [availablePlayers, selectedTeam]);
+
+  useEffect(() => {
+    if (!ownGoal)
+      setAvailablePlayers(selectedTeam === Team.RED ? match.redTeam : match.yellowTeam);
+    else
+      setAvailablePlayers(selectedTeam === Team.RED ? match.yellowTeam : match.redTeam);
+  }, [ownGoal, selectedTeam, match, match.redTeam, match.yellowTeam]);
+
 
   const handleAddGoal = async () => {
     if (selectedTeam && scorer) {
@@ -42,22 +59,15 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
   };
 
   const handleScorerChanged = (id: string): void => {
-    const player = availablePlayers().find(p => p.id === id);
+    const player = availablePlayers.find(p => p.id === id);
     if (player)
       setScorer(player);
   }
 
   const handleAssisterChanged = (id: string): void => {
-    const player = availablePlayers().find(p => p.id === id);
+    const player = availablePlayers.find(p => p.id === id);
     if (player)
       setAssister(player);
-  }
-
-  const availablePlayers = (): SimplePlayer[] => {
-    if (!ownGoal)
-      return selectedTeam === Team.RED ? match.redTeam : match.yellowTeam;
-    else
-      return selectedTeam === Team.RED ? match.yellowTeam : match.redTeam;
   }
 
   return (
@@ -77,10 +87,10 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
         <FormControl fullWidth>
           <InputLabel>Scorer</InputLabel>
           <Select
-            value={scorer?.id}
+            value={scorer?.id ?? ''}
             onChange={(e) => handleScorerChanged(e.target.value as string)}
           >
-            {availablePlayers().map((player) => (
+            {availablePlayers.map((player) => (
               <MenuItem key={player.id} value={player.id}>
                 {player.name}
               </MenuItem>
@@ -92,10 +102,10 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
           <FormControl fullWidth>
             <InputLabel>Assister</InputLabel>
             <Select
-              value={assister?.id}
+              value={assister?.id ?? ''}
               onChange={(e) => handleAssisterChanged(e.target.value as string)}
             >
-              {availablePlayers().map((player) => (
+              {availablePlayers.map((player) => (
                 <MenuItem key={player.id} value={player.id}>
                   {player.name}
                 </MenuItem>

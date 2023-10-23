@@ -13,7 +13,6 @@ import ExistingMatchCardView from './ExistingMatchCardView';
 
 const CreateMatch: React.FC = () => {
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
-  const [currentMatchState, setCurrentMatchState] = useState<MatchState | null>(null); // Replace any with your match type
   const [forceCreateMatch, setForceCreateMatch] = useState(false);
   const [existingMatches, setExistingMatches] = useState<Match[]>([]); // Replace any with your match type
 
@@ -44,7 +43,6 @@ const CreateMatch: React.FC = () => {
 
   const handleMatchChosen = (match: Match) => {
     setCurrentMatch(match);
-    setCurrentMatchState(match.state);
     setForceCreateMatch(false);
   }
 
