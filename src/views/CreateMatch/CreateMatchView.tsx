@@ -3,10 +3,14 @@ import { Button, Grid } from '@mui/material';
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { Match, MatchState, Team } from '../../types/Match';
 import { firestoreDb } from "../../firebase";
 import { addDoc, collection } from "firebase/firestore";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const getNextTuesday = (): Dayjs => {
   let today = dayjs();
@@ -20,9 +24,10 @@ type CreateMatchFormProps = {
 const CreateMatchView: React.FC<CreateMatchFormProps> = ({ setMatch }) => {
   const [matchDate, setMatchDate] = useState<Dayjs | null>(getNextTuesday());
   const handleSubmit = async () => {
+    const at8germanTime = matchDate?.utc().tz('Europe/Berlin').hour(20).minute(0).second(0).toDate() ?? new Date();
     // Logic to create the match in Firestore or wherever you're storing it
     const newMatch: Omit<Match, 'id'> = {
-      date: matchDate?.toDate() ?? new Date(),
+      date: at8germanTime,
       redTeam: [],
       yellowTeam: [],
       unassignedPlayers: [],

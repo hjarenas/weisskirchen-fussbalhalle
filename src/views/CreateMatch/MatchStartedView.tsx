@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Grid } from '@mui/material';
 import AddGoalDialog from '../../components/Matches/AddGoalDialog';
-import { Match, Goal, Team, MatchState } from '../../types/Match';
+import { Match, Goal, MatchState } from '../../types/Match';
 import { firestoreDb } from '../../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import GridMatchItem from '../../components/Matches/GridMatchItem';
