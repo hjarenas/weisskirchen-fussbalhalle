@@ -62,7 +62,10 @@ const App: React.FC = () => {
           open={mobileOpen}
           onClose={handleDrawerToggle}
         >
-          <Sidebar />
+          <div style={{ marginTop: '64px' }}>
+            <Sidebar />
+
+          </div>
         </Drawer>
       </Hidden>
 
