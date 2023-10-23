@@ -9,6 +9,8 @@ import { Button, List, ListItem } from '@mui/material';
 import CreateMatchView from './CreateMatchView';
 import { fromFirestoreMatch } from '../../utils/firestoreUtils';
 import ExistingMatchCardView from './ExistingMatchCardView';
+import { useNavigate } from 'react-router-dom';
+
 
 
 const CreateMatch: React.FC = () => {
@@ -35,15 +37,20 @@ const CreateMatch: React.FC = () => {
     fetchMatches();
   }, []);
 
+  const navigate = useNavigate();
   const deleteMatch = async (match: Match) => {
     const matchRef = doc(collection(firestoreDb, 'matches'), match.id!);
     await deleteDoc(matchRef);
     setExistingMatches(prevMatches => prevMatches.filter(m => m.id !== match.id));
   }
 
-  const handleMatchChosen = (match: Match) => {
+  const handleMatchChosen = (match: Match): void => {
     setCurrentMatch(match);
     setForceCreateMatch(false);
+  }
+
+  const handleMatchCompleted = (match: Match): void => {
+    navigate(`/past-matches/${match.id}`);
   }
 
   if (!currentMatch && !forceCreateMatch && existingMatches?.length > 0) {
@@ -72,7 +79,7 @@ const CreateMatch: React.FC = () => {
     case MatchState.ChoosingTeams:
       return <ChoosingTeamsView currentMatch={currentMatch} setCurrentMatch={setCurrentMatch} />;
     case MatchState.MatchStarted:
-      return <MatchStartedView initialMatch={currentMatch} backToSelectTeams={setCurrentMatch} onMatchCompleted={() => null} />;
+      return <MatchStartedView initialMatch={currentMatch} backToSelectTeams={setCurrentMatch} onMatchCompleted={handleMatchCompleted} />;
     default:
       return <div>Invalid state</div>;
   }

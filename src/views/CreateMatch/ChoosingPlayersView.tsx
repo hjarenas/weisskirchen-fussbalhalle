@@ -15,8 +15,8 @@ interface Props {
   setCurrentMatch: (match: Match) => void;
 }
 const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch }) => {
-  const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
-  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [availablePlayers, setAvailablePlayers] = useState<SimplePlayer[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<SimplePlayer[]>([]);
   const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
@@ -34,13 +34,23 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch })
         const bMatches = b.stats?.[currentYear]?.matchesPlayed ?? 0;
         return bMatches - aMatches;
       });
-      setAvailablePlayers(fetchedPlayers);
+      setAvailablePlayers(fetchedPlayers.map(p => p as SimplePlayer));
     };
 
     fetchPlayers();
   }, []);
 
-  const handlePlayerToggle = (player: Player) => {
+  useEffect(() => {
+    if (!!currentMatch) {
+      const unassignedPlayers = currentMatch.unassignedPlayers;
+      const redTeam = currentMatch.redTeam;
+      const yellowTeam = currentMatch.yellowTeam;
+      const newSelectedPlayers = [...unassignedPlayers, ...redTeam, ...yellowTeam];
+      setSelectedPlayers(newSelectedPlayers);
+    }
+  }, [currentMatch])
+
+  const handlePlayerToggle = (player: SimplePlayer) => {
     if (selectedPlayers.includes(player)) {
       setSelectedPlayers(prev => prev.filter(p => p.id !== player.id));
       setAvailablePlayers(prev => [...prev, player]);
@@ -67,7 +77,7 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch })
   };
 
   function handlePlayerAdded(newPlayer: Player): void {
-    selectedPlayers.push(newPlayer);
+    selectedPlayers.push(newPlayer as SimplePlayer);
   }
 
   return (

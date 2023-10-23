@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import CreateNewMatchView from './views/CreateMatch';
 import RecurringPlayersView from './views/RecurringPlayersView';
-import PastMatches from './views/PastMatches';
+import PastMatchesView from './views/PastMatches';
 import Home from './views/Home';
 import { AppBar, CssBaseline, Drawer, Toolbar, Typography } from '@mui/material';
 import Sidebar from './components/Sidebar/Sidebar';
@@ -36,7 +36,9 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/recurring-players" element={<RecurringPlayersView />} />
-          <Route path="/past-matches" element={<PastMatches />} />
+
+          <Route path="/past-matches/:matchId" element={<PastMatchesView />} />
+          <Route path="/past-matches" element={<PastMatchesView />} />
           <Route path="/create-new-match" element={<CreateNewMatchView />} />
         </Routes>
       </main>

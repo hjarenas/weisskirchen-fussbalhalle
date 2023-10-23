@@ -8,7 +8,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 interface MatchStartedViewProps {
   initialMatch: Match;
   backToSelectTeams: (match: Match) => void;
-  onMatchCompleted: () => void;
+  onMatchCompleted: (match: Match) => void;
 }
 
 const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backToSelectTeams, onMatchCompleted }) => {
@@ -54,6 +54,21 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     backToSelectTeams(updatedMatch);
   }
 
+  const handleCompleteMatch = async () => {
+    const updates = {
+      state: MatchState.MatchEnded
+    };
+
+    const updatedMatch = {
+      ...match,
+      ...updates
+    };
+
+    const matchRef = doc(firestoreDb, 'matches', match.id!);
+    await updateDoc(matchRef, updates);
+
+    onMatchCompleted(updatedMatch);
+  }
   return (
     <Grid container direction="column" alignItems="center" spacing={3}>
       <Grid item>
@@ -93,7 +108,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
             <Button variant="contained" color="secondary" onClick={() => setDialogOpen(true)}>Add Goal</Button>
           </Grid>
           <Grid item>
-            <Button variant="contained" color="primary" onClick={onMatchCompleted}>Complete Match</Button>
+            <Button variant="contained" color="primary" onClick={handleCompleteMatch}>Complete Match</Button>
           </Grid>
         </Grid>
       </Grid>
