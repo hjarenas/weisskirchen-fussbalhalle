@@ -20,10 +20,26 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, set
 
   useEffect(() => {
     if (!!currentMatch) {
-      const shuffledPlayers = [...currentMatch.unassignedPlayers].sort(() => 0.5 - Math.random());
-      const middleIndex = Math.ceil(shuffledPlayers.length / 2);
-      setRedTeam(shuffledPlayers.slice(0, middleIndex));
-      setYellowTeam(shuffledPlayers.slice(middleIndex));
+      // Start with the original teams
+      let newRedTeam = [...currentMatch.redTeam];
+      let newYellowTeam = [...currentMatch.yellowTeam];
+
+      // Get the remaining unassigned players and shuffle them
+      const remainingPlayers = currentMatch.unassignedPlayers.filter(
+        player => !newRedTeam.includes(player) && !newYellowTeam.includes(player)
+      ).sort(() => 0.5 - Math.random());
+
+      // Distribute the remaining players between the two teams
+      remainingPlayers.forEach((player, index) => {
+        if (newRedTeam.length <= newYellowTeam.length) {
+          newRedTeam.push(player);
+        } else {
+          newYellowTeam.push(player);
+        }
+      });
+
+      setRedTeam(newRedTeam);
+      setYellowTeam(newYellowTeam);
     }
   }, [currentMatch, currentMatch.unassignedPlayers]);
 
@@ -39,10 +55,10 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, set
 
   async function updateStateAndInformParent(newState: MatchState): Promise<void> {
     const updates = {
-      state : newState,
-      redTeam : redTeam,
-      yellowTeam : yellowTeam,
-      unassignedPlayers : [],
+      state: newState,
+      redTeam: redTeam,
+      yellowTeam: yellowTeam,
+      unassignedPlayers: [],
     };
     const updatedMatch = {
       ...currentMatch,
