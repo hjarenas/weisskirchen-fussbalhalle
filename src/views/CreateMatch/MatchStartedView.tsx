@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Button, Typography, List, ListItem, ListItemText, Grid } from '@mui/material';
-import AddGoalDialog from '../../components/AddGoalDialog';
+import { Button, Grid } from '@mui/material';
+import AddGoalDialog from '../../components/Matches/AddGoalDialog';
 import { Match, Goal, Team, MatchState } from '../../types/Match';
 import { firestoreDb } from '../../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import GridMatchItem from '../../components/Matches/GridMatchItem';
 
 interface MatchStartedViewProps {
   initialMatch: Match;
@@ -71,34 +72,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
   }
   return (
     <Grid container direction="column" alignItems="center" spacing={3}>
-      <Grid item>
-        <Typography variant="h4">Match on {new Date(match.date).toLocaleDateString()}</Typography>
-      </Grid>
-      <Grid item>
-        <Typography variant="h2">{match.score.red} - {match.score.yellow}</Typography>
-      </Grid>
-      <Grid item container direction="row" justifyContent="center" spacing={3}>
-        <Grid item xs={12} sm={5}>
-          <Typography variant="h6" align="center">Red Team</Typography>
-          <List>
-            {match.goals?.filter(goal => goal.team === Team.RED).map((goal, index) => (
-              <ListItem key={index}>
-                <ListItemText primary={goal.scorer.name} secondary={goal.ownGoal ? "Own Goal" : `Assisted by ${goal.assister?.name}`} />
-              </ListItem>
-            ))}
-          </List>
-        </Grid>
-        <Grid item xs={12} sm={5}>
-          <Typography variant="h6" align="center">Yellow Team</Typography>
-          <List>
-            {match.goals?.filter(goal => goal.team === Team.YELLOW).map((goal, index) => (
-              <ListItem key={index}>
-                <ListItemText primary={goal.scorer.name} secondary={goal.ownGoal ? "Own Goal" : `Assisted by ${goal.assister?.name}`} />
-              </ListItem>
-            ))}
-          </List>
-        </Grid>
-      </Grid>
+      <GridMatchItem match={match} />
       <Grid item container spacing={2} justifyContent="space-between" alignItems="center" style={{ width: '100%' }}>
         <Grid item xs="auto">
           <Button variant="contained" color="secondary" onClick={goBackToSelectTeams}>Go Back</Button>

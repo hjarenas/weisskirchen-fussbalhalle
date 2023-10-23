@@ -13,7 +13,7 @@ import {
   InputLabel,
   Checkbox,
 } from '@mui/material';
-import { Goal, Match, SimplePlayer, Team } from '../types/Match';
+import { Goal, Match, SimplePlayer, Team } from '../../types/Match';
 import React, { useEffect } from 'react';
 
 interface AddGoalDialogProps {
