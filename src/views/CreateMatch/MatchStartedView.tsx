@@ -72,30 +72,55 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     // Start a batch
     const batch = writeBatch(firestoreDb);
 
-    const updatePlayerStats = async (simplePlayer: SimplePlayer, matchOutcome: MatchOutcomeForPlayer) => {
-      const playerRef = doc(firestoreDb, 'players', simplePlayer.id);
-      const currentYear = new Date().getFullYear().toString();
-      const player = (await getDoc(playerRef)).data() as Player;
-      const currentStats: PlayerStats = player.stats[currentYear] || {};
+    // Initialize an object to track player stats updates
+    const playerUpdates: { [playerId: string]: PlayerStats } = {};
 
-      // Update stats based on match outcome
-      currentStats.matchesPlayed = (currentStats.matchesPlayed ?? 0) + 1;
-      if (matchOutcome === MatchOutcomeForPlayer.Win) {
-        currentStats.wins = (currentStats.wins ?? 0) + 1;
-      } else if (matchOutcome === MatchOutcomeForPlayer.Loss) {
-        currentStats.losses = (currentStats.losses ?? 0) + 1;
+    // Function to accumulate player stats updates
+    const accumulatePlayerStats = (playerId: string, updates: Partial<PlayerStats>) => {
+      if (!playerUpdates[playerId]) {
+        playerUpdates[playerId] = { goals: 0, assists: 0, ownGoals: 0, matchesPlayed: 0, wins: 0, losses: 0, ties: 0 };
       }
-      else {
-        currentStats.ties = (currentStats.ties ?? 0) + 1;
-      }
-
-      // Update the player stats in the batch
-      batch.update(playerRef, { [`stats.${currentYear}`]: currentStats });
+      Object.keys(updates).forEach((key: string) => {
+        const statsKey = key as keyof PlayerStats;
+        playerUpdates[playerId][statsKey] = (playerUpdates[playerId][statsKey] ?? 0) + (updates[statsKey] ?? 0);
+      });
     };
+
+    // Process goals, assists, and own goals
+    match.goals.forEach(goal => {
+      if (!goal.ownGoal) {
+        accumulatePlayerStats(goal.scorer.id, { goals: 1 });
+      }
+      else if (goal.ownGoal) {
+        accumulatePlayerStats(goal.scorer.id, { ownGoals: 1 });
+      }
+
+      if (goal.assister) {
+        accumulatePlayerStats(goal.assister.id, { assists: 1 });
+      }
+    });
+
+    // Determine match outcome and update player stats
     let matchOutcome = determineMatchOutcome();
-    // Update stats for each player
-    await Promise.all(match.redTeam.map(player => updatePlayerStats(player, convertMatchOutcomeToPlayerOutcome(matchOutcome, Team.RED))));
-    await Promise.all(match.yellowTeam.map(player => updatePlayerStats(player, convertMatchOutcomeToPlayerOutcome(matchOutcome, Team.YELLOW))));
+    match.redTeam.forEach(player => accumulatePlayerStats(player.id, getWinsLossesOrTieObject(matchOutcome, Team.RED)));
+    match.yellowTeam.forEach(player => accumulatePlayerStats(player.id, getWinsLossesOrTieObject(matchOutcome, Team.YELLOW)));
+
+    // Apply the accumulated updates to each player
+    const currentYear = new Date().getFullYear().toString();
+    await Promise.all(Object.entries(playerUpdates).map(async ([playerId, updates]) => {
+      const playerRef = doc(firestoreDb, 'players', playerId);
+      const playerSnap = await getDoc(playerRef);
+      const player: Player = playerSnap.data() as Player;
+      const currentStats: PlayerStats = player.stats[currentYear] || {};
+      // Merge updates with current stats
+      Object.keys(updates).forEach((key: string) => {
+        const statsKey = key as keyof PlayerStats;
+        currentStats[statsKey] = (currentStats[statsKey] ?? 0) + (updates[statsKey] ?? 0);
+      });
+
+      // Write updated stats back to Firestore
+      batch.update(playerRef, { [`stats.${currentYear}`]: currentStats });
+    }));
 
     // Update the match state
     const updates = { state: MatchState.MatchEnded };
@@ -109,7 +134,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
       ...updates
     };
     onMatchCompleted(updatedMatch);
-  }
+  };
 
   const determineMatchOutcome = (): MatchOutcome => {
     if (match.score.red > match.score.yellow) {
@@ -120,16 +145,18 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
       return MatchOutcome.Tie;
     }
   }
-  const convertMatchOutcomeToPlayerOutcome = (matchOutcome: MatchOutcome, team: Team): MatchOutcomeForPlayer => {
+  const getWinsLossesOrTieObject = (matchOutcome: MatchOutcome, team: Team): Partial<PlayerStats> => {
+    const matchesPlayed: Partial<PlayerStats> = { matchesPlayed: 1 };
     if (matchOutcome === MatchOutcome.RedWon && team === Team.RED) {
-      return MatchOutcomeForPlayer.Win;
+      return { matchesPlayed: 1, wins: 1 };
     } else if (matchOutcome === MatchOutcome.YellowWon && team === Team.YELLOW) {
-      return MatchOutcomeForPlayer.Win;
+      return { matchesPlayed: 1, wins: 1 };
     } else if (matchOutcome === MatchOutcome.Tie) {
-      return MatchOutcomeForPlayer.Tie;
+      return { matchesPlayed: 1, ties: 1 };
     }
-    return MatchOutcomeForPlayer.Loss;
+    return { matchesPlayed: 1, losses: 1 };
   }
+
   return (
     <Grid container direction="column" alignItems="center" spacing={3}>
       <GridMatchItem match={match} />

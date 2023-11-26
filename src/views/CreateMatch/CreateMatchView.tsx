@@ -5,7 +5,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Match, MatchState, Team } from '../../types/Match';
+import { Match, MatchState } from '../../types/Match';
 import { firestoreDb } from "../../firebase";
 import { addDoc, collection } from "firebase/firestore";
 
@@ -36,7 +36,6 @@ const CreateMatchView: React.FC<CreateMatchFormProps> = ({ setMatch }) => {
         yellow: 0,
       },
       goals: [],
-      winner: Team.RED, // You can set a default or leave it out if it's optional
       state: MatchState.ChoosingPlayers,
     };
     // Add to Firestore
