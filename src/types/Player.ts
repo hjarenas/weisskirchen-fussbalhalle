@@ -7,6 +7,7 @@ export interface PlayerStats {
   ownGoals?: number;
   wins?: number;
   losses?: number;
+  ties?: number;
 }
 
 export interface Player {

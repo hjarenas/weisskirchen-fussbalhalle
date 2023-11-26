@@ -34,11 +34,9 @@ interface BaseMatch {
     yellow: number;
   };
   goals: Goal[];
-  winner: Team;
   state: MatchState;
 }
 export interface Match extends BaseMatch {
-
   date: Date;
 }
 
