@@ -71,6 +71,18 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
       setAssister(player);
   }
 
+  const markOwnGoal = (checked: boolean): void => {
+    setOwnGoal(checked);
+    debugger;
+    if (checked) {
+      setAssister(null);
+    }
+    else {
+      const assister = availablePlayers?.length > 1 ? availablePlayers[1] : null;
+      setAssister(assister);
+    }
+  }
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Add Goal</DialogTitle>
@@ -92,7 +104,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
             <InputLabel>Scorer</InputLabel>
             <Select
               value={scorer?.id ?? ''}
-              onChange={(e) => handleScorerChanged(e.target.value as string)}
+              onChange={(e) => handleScorerChanged(e.target.value)}
             >
               {availablePlayers.map((player) => (
                 <MenuItem key={player.id} value={player.id}>
@@ -109,7 +121,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
               <InputLabel>Assister</InputLabel>
               <Select
                 value={assister?.id ?? ''}
-                onChange={(e) => handleAssisterChanged(e.target.value as string)}
+                onChange={(e) => handleAssisterChanged(e.target.value)}
               >
                 {availablePlayers.map((player) => (
                   <MenuItem key={player.id} value={player.id}>
@@ -122,7 +134,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
         )}
 
         <FormControlLabel
-          control={<Checkbox checked={ownGoal} onChange={(e) => setOwnGoal(e.target.checked)} />}
+          control={<Checkbox checked={ownGoal} onChange={(e) => markOwnGoal(e.target.checked)} />}
           label="Own Goal"
         />
       </DialogContent>

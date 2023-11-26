@@ -1,7 +1,7 @@
 import { Button, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, writeBatch } from 'firebase/firestore';
 import { Player } from '../types/Player';
 import { firestoreDb } from '../firebase';
 import styles from './RecurringPlayersView.module.css';
@@ -50,12 +50,39 @@ const RecurringPlayersView: React.FC = () => {
     setPlayers(data);
   };
 
+  const deleteAllStats = async () => {
+    setLoading(true);
+    const playersRef = collection(firestoreDb, 'players');
+    const querySnapshot = await getDocs(playersRef);
+    const batch = writeBatch(firestoreDb);
+    // delete all matches
+    const matchesRef = collection(firestoreDb, 'matches');
+    const matchesQuerySnapshot = await getDocs(matchesRef);
+    matchesQuerySnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    querySnapshot.forEach((doc) => {
+      batch.update(doc.ref, { stats: {} });
+    });
+    await batch.commit();
+    const data = await fetchPlayersForCurrentYear();
+    setPlayers(data);
+    setLoading(false);
+  }
+
   return (
     <>
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={deleteAllStats}
+            className={styles.addButton}>
+            Delete All Player Stats and Matches
+          </Button>
           <Button
             variant="contained"
             color="primary"

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Button, Grid } from '@mui/material';
 import AddGoalDialog from '../../components/Matches/AddGoalDialog';
-import { Match, Goal, MatchState, Team, SimplePlayer } from '../../types/Match';
+import { Match, Goal, MatchState, Team } from '../../types/Match';
 import { firestoreDb } from '../../firebase';
-import { doc, getDoc, increment, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import GridMatchItem from '../../components/Matches/GridMatchItem';
 import { Player, PlayerStats } from '../../types/Player';
 
@@ -16,12 +16,6 @@ interface MatchStartedViewProps {
 enum MatchOutcome {
   RedWon,
   YellowWon,
-  Tie
-}
-
-enum MatchOutcomeForPlayer {
-  Win,
-  Loss,
   Tie
 }
 
@@ -146,7 +140,6 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     }
   }
   const getWinsLossesOrTieObject = (matchOutcome: MatchOutcome, team: Team): Partial<PlayerStats> => {
-    const matchesPlayed: Partial<PlayerStats> = { matchesPlayed: 1 };
     if (matchOutcome === MatchOutcome.RedWon && team === Team.RED) {
       return { matchesPlayed: 1, wins: 1 };
     } else if (matchOutcome === MatchOutcome.YellowWon && team === Team.YELLOW) {
