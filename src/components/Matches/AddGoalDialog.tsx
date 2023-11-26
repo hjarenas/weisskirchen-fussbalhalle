@@ -12,6 +12,7 @@ import {
   FormControl,
   InputLabel,
   Checkbox,
+  Box,
 } from '@mui/material';
 import { Goal, Match, SimplePlayer, Team } from '../../types/Match';
 import React, { useEffect } from 'react';
@@ -74,36 +75,24 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Add Goal</DialogTitle>
       <DialogContent>
-        <FormControl component="fieldset">
-          <RadioGroup
-            value={selectedTeam}
-            onChange={(e) => setSelectedTeam(e.target.value as Team)}
-          >
-            <FormControlLabel value={Team.RED} control={<Radio />} label="Red Team" />
-            <FormControlLabel value={Team.YELLOW} control={<Radio />} label="Yellow Team" />
-          </RadioGroup>
-        </FormControl>
+        <Box mb={2}>
+          <FormControl component="fieldset">
+            <RadioGroup
+              value={selectedTeam}
+              onChange={(e) => setSelectedTeam(e.target.value as Team)}
+            >
+              <FormControlLabel value={Team.RED} control={<Radio />} label="Red Team" />
+              <FormControlLabel value={Team.YELLOW} control={<Radio />} label="Yellow Team" />
+            </RadioGroup>
+          </FormControl>
+        </Box>
 
-        <FormControl fullWidth>
-          <InputLabel>Scorer</InputLabel>
-          <Select
-            value={scorer?.id ?? ''}
-            onChange={(e) => handleScorerChanged(e.target.value as string)}
-          >
-            {availablePlayers.map((player) => (
-              <MenuItem key={player.id} value={player.id}>
-                {player.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {!ownGoal && (
+        <Box mb={2}>
           <FormControl fullWidth>
-            <InputLabel>Assister</InputLabel>
+            <InputLabel>Scorer</InputLabel>
             <Select
-              value={assister?.id ?? ''}
-              onChange={(e) => handleAssisterChanged(e.target.value as string)}
+              value={scorer?.id ?? ''}
+              onChange={(e) => handleScorerChanged(e.target.value as string)}
             >
               {availablePlayers.map((player) => (
                 <MenuItem key={player.id} value={player.id}>
@@ -112,6 +101,24 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
               ))}
             </Select>
           </FormControl>
+        </Box>
+
+        {!ownGoal && (
+          <Box mb={2}>
+            <FormControl fullWidth>
+              <InputLabel>Assister</InputLabel>
+              <Select
+                value={assister?.id ?? ''}
+                onChange={(e) => handleAssisterChanged(e.target.value as string)}
+              >
+                {availablePlayers.map((player) => (
+                  <MenuItem key={player.id} value={player.id}>
+                    {player.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         )}
 
         <FormControlLabel
