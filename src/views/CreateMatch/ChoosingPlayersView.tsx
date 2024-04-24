@@ -158,7 +158,7 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchS
 
         {/* Right List */}
         <Grid item xs={12} md={6}>
-          <h2>Selected Players</h2>
+          <h2>Selected Players  ({ selectedPlayers?.length })</h2>
           <List>
             {selectedPlayers.map(player => (
               <ListItemButton
