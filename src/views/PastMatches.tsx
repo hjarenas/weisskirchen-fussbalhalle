@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { firestoreDb } from '../firebase';
 import { Goal, Match, MatchState, SimplePlayer } from '../types/Match';
 import { fromFirestoreMatch } from '../utils/firestoreUtils';
@@ -30,6 +30,9 @@ const PastMatchesView: React.FC = () => {
           console.error('Match not found');
         }
       }
+      else {
+        setMatch(null);
+      }
     };
 
     fetchMatchData();
@@ -58,7 +61,7 @@ const PastMatchesView: React.FC = () => {
     fetchMatches();
   }, [matchId]);
 
-
+  const navigate = useNavigate();
   const getTopScorer = (goals: Goal[]): SimplePlayer | null => {
     const scorerCounts: { [key: string]: number } = {};
 
@@ -70,7 +73,10 @@ const PastMatchesView: React.FC = () => {
     const topScorerId = Object.keys(scorerCounts).reduce((a, b) => scorerCounts[a] > scorerCounts[b] ? a : b, "");
     return goals.find(goal => goal.scorer.id === topScorerId)?.scorer || null;
   };
-
+  const navigateToPastMatch = (matchId: string) => {
+    debugger;
+    navigate(`/past-matches/${matchId}`);
+  }
 
   if (!match)
     return (
@@ -85,10 +91,10 @@ const PastMatchesView: React.FC = () => {
           </TableHead>
           <TableBody>
             {matchesList.map((match) => (
-              <TableRow key={match.id}>
-                <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
-                <TableCell>{match.score.red} - {match.score.yellow}</TableCell>
-                <TableCell>{getTopScorer(match.goals)?.name || 'N/A'}</TableCell>
+              <TableRow key={match.id} className="clickable-row" onClick={() => navigateToPastMatch(match!.id!)}>
+                  <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{match.score.red} - {match.score.yellow}</TableCell>
+                  <TableCell>{getTopScorer(match.goals)?.name || 'N/A'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

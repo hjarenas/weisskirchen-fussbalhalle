@@ -74,8 +74,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/recurring-players" element={<RecurringPlayersView />} />
 
-          <Route path="/past-matches/:matchId" element={<PastMatchesView />} />
-          <Route path="/past-matches" element={<PastMatchesView />} />
+          <Route path="/past-matches/:matchId?" element={<PastMatchesView />} />
           <Route path="/create-new-match" element={<CreateNewMatchView />} />
         </Routes>
       </main>
