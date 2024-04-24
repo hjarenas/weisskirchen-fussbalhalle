@@ -1,11 +1,18 @@
-import { Timestamp } from "firebase/firestore";
+import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 import { FirestoreMatch, Match } from "../types/Match";
 
-export function fromFirestoreMatch(firestoreMatch: FirestoreMatch): Match {
+function transformDates(firestoreMatch: FirestoreMatch): Match {
   return {
     ...firestoreMatch,
     date: firestoreMatch.date.toDate()
   };
+}
+
+export function fromFirestoreMatch(doc: QueryDocumentSnapshot<DocumentData, DocumentData>): Match {
+  const firestoreObject = doc.data() as FirestoreMatch;
+  let domainObject = transformDates(firestoreObject);
+  domainObject.id = doc.id;
+  return domainObject;
 }
 
 export function toFirestoreMatch(appMatch: Match): FirestoreMatch {

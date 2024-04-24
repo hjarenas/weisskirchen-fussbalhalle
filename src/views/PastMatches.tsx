@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebas
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { firestoreDb } from '../firebase';
-import { FirestoreMatch, Goal, Match, MatchState, SimplePlayer } from '../types/Match';
+import { Goal, Match, MatchState, SimplePlayer } from '../types/Match';
 import { fromFirestoreMatch } from '../utils/firestoreUtils';
 import { Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import GridMatchItem from '../components/Matches/GridMatchItem';
@@ -24,8 +24,7 @@ const PastMatchesView: React.FC = () => {
         const matchSnapshot = await getDoc(matchRef);
 
         if (matchSnapshot.exists()) {
-          const firestoreMatch = matchSnapshot.data() as FirestoreMatch;
-          const match = fromFirestoreMatch({ id: matchId, ...firestoreMatch });
+          const match = fromFirestoreMatch(matchSnapshot);
           setMatch(match);
         } else {
           console.error('Match not found');
@@ -48,8 +47,7 @@ const PastMatchesView: React.FC = () => {
 
         const matches: Match[] = []; // Replace any with your match type
         querySnapshot.forEach((doc) => {
-          const firestoreMatch = doc.data() as FirestoreMatch;
-          const match = fromFirestoreMatch({ id: doc.id, ...firestoreMatch });
+          const match = fromFirestoreMatch(doc);
           matches.push(match);
         });
 

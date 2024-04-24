@@ -4,19 +4,37 @@ import React, { useState, useEffect } from 'react';
 import { Button, Grid, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Match, MatchState, SimplePlayer, Team } from '../../types/Match';
 import { firestoreDb } from '../../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
+import { fromFirestoreMatch } from '../../utils/firestoreUtils';
 
 type ChoosingTeamsViewProps = {
-  currentMatch: Match;
-  setCurrentMatch: (currentMatch: Match) => void;
+  currentMatchId: string;
+  setCurrentMatchState: (currentMatchState: MatchState) => void;
 };
 
-const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, setCurrentMatch }) => {
+const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatchId, setCurrentMatchState }) => {
+  const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [redTeam, setRedTeam] = useState<SimplePlayer[]>([]);
   const [yellowTeam, setYellowTeam] = useState<SimplePlayer[]>([]);
   // Inside ChoosingTeamsView component
+
+  useEffect(() => {
+    const matchRef = doc(firestoreDb, 'matches', currentMatchId);
+
+    const unsubscribe = onSnapshot(matchRef, (doc) => {
+      if (doc.exists()) {
+        const match = fromFirestoreMatch(doc);
+        setCurrentMatch(match);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [currentMatchId]);
 
   useEffect(() => {
     if (!!currentMatch) {
@@ -41,7 +59,7 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, set
       setRedTeam(newRedTeam);
       setYellowTeam(newYellowTeam);
     }
-  }, [currentMatch, currentMatch.unassignedPlayers]);
+  }, [currentMatch, currentMatch?.unassignedPlayers]);
 
   const handleMovePlayer = (player: SimplePlayer, fromTeam: Team) => {
     if (fromTeam === Team.RED) {
@@ -64,9 +82,9 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatch, set
       ...currentMatch,
       ...updates
     };
-    const matchRef = doc(firestoreDb, 'matches', currentMatch.id!);
+    const matchRef = doc(firestoreDb, 'matches', currentMatchId);
     await updateDoc(matchRef, updates);
-    setCurrentMatch(updatedMatch);
+    setCurrentMatchState(updatedMatch.state);
   }
 
   async function onStartMatch(): Promise<void> {

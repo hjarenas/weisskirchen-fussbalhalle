@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Grid } from '@mui/material';
 import AddGoalDialog from '../../components/Matches/AddGoalDialog';
 import { Match, Goal, MatchState, Team } from '../../types/Match';
 import { firestoreDb } from '../../firebase';
-import { doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
 import GridMatchItem from '../../components/Matches/GridMatchItem';
 import { Player, PlayerStats } from '../../types/Player';
+import { fromFirestoreMatch } from '../../utils/firestoreUtils';
 
 interface MatchStartedViewProps {
-  initialMatch: Match;
-  backToSelectTeams: (match: Match) => void;
+  initialMatchId: string;
+  backToSelectTeams: (match: MatchState) => void;
   onMatchCompleted: (match: Match) => void;
 }
 
@@ -19,12 +20,32 @@ enum MatchOutcome {
   Tie
 }
 
-const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backToSelectTeams, onMatchCompleted }) => {
-  const [match, setMatch] = useState<Match>(initialMatch);
+const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatchId, backToSelectTeams, onMatchCompleted }) => {
+  const [match, setMatch] = useState<Match | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const matchRef = doc(firestoreDb, 'matches', initialMatchId);
+
+    const unsubscribe = onSnapshot(matchRef, (doc) => {
+      if (doc.exists()) {
+        const match = fromFirestoreMatch(doc);
+        setMatch(match);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [initialMatchId]);
 
   const handleGoalAdded = async (goal: Goal) => {
     setDialogOpen(false);
+    if (!match) {
+      console.log('Match not found');
+      return;
+    }
     // Refresh the match data or update the local state if necessary
     const updates = {
       goals: [...match.goals, goal],
@@ -46,6 +67,11 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
   };
 
   const goBackToSelectTeams = async () => {
+    if (!match) {
+      console.log('Match not found');
+      return;
+    }
+
     const updates = {
       state: MatchState.ChoosingTeams
     };
@@ -59,10 +85,14 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     await updateDoc(matchRef, updates);
 
     setMatch(updatedMatch);
-    backToSelectTeams(updatedMatch);
+    backToSelectTeams(updatedMatch.state);
   }
 
   const handleCompleteMatch = async () => {
+    if (!match) {
+      console.log('Match not found');
+      return;
+    }
     // Start a batch
     const batch = writeBatch(firestoreDb);
 
@@ -95,7 +125,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     });
 
     // Determine match outcome and update player stats
-    let matchOutcome = determineMatchOutcome();
+    let matchOutcome = determineMatchOutcome(match);
     match.redTeam.forEach(player => accumulatePlayerStats(player.id, getWinsLossesOrTieObject(matchOutcome, Team.RED)));
     match.yellowTeam.forEach(player => accumulatePlayerStats(player.id, getWinsLossesOrTieObject(matchOutcome, Team.YELLOW)));
 
@@ -130,10 +160,10 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
     onMatchCompleted(updatedMatch);
   };
 
-  const determineMatchOutcome = (): MatchOutcome => {
-    if (match.score.red > match.score.yellow) {
+  const determineMatchOutcome = (finalMatch: Match): MatchOutcome => {
+    if (finalMatch.score.red > finalMatch.score.yellow) {
       return MatchOutcome.RedWon;
-    } else if (match.score.red < match.score.yellow) {
+    } else if (finalMatch.score.red < finalMatch.score.yellow) {
       return MatchOutcome.YellowWon;
     } else {
       return MatchOutcome.Tie;
@@ -151,23 +181,27 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatch, backT
   }
 
   return (
-    <Grid container direction="column" alignItems="center" spacing={3}>
-      <GridMatchItem match={match} />
-      <Grid item container spacing={2} justifyContent="space-between" alignItems="center" style={{ width: '100%' }}>
-        <Grid item xs="auto">
-          <Button variant="contained" color="secondary" onClick={goBackToSelectTeams}>Go Back</Button>
-        </Grid>
-        <Grid item container spacing={2} justifyContent="flex-end" xs>
-          <Grid item>
-            <Button variant="contained" color="secondary" onClick={() => setDialogOpen(true)}>Add Goal</Button>
+    <>
+      {!!match ? (
+        <Grid container direction="column" alignItems="center" spacing={3}>
+          <GridMatchItem match={match} />
+          <Grid item container spacing={2} justifyContent="space-between" alignItems="center" style={{ width: '100%' }}>
+            <Grid item xs="auto">
+              <Button variant="contained" color="secondary" onClick={goBackToSelectTeams}>Go Back</Button>
+            </Grid>
+            <Grid item container spacing={2} justifyContent="flex-end" xs>
+              <Grid item>
+                <Button variant="contained" color="secondary" onClick={() => setDialogOpen(true)}>Add Goal</Button>
+              </Grid>
+              <Grid item>
+                <Button variant="contained" color="primary" onClick={handleCompleteMatch}>Complete Match</Button>
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item>
-            <Button variant="contained" color="primary" onClick={handleCompleteMatch}>Complete Match</Button>
-          </Grid>
+          <AddGoalDialog match={match} open={dialogOpen} onClose={() => setDialogOpen(false)} handleGoalAdded={handleGoalAdded} />
         </Grid>
-      </Grid>
-      <AddGoalDialog match={match} open={dialogOpen} onClose={() => setDialogOpen(false)} handleGoalAdded={handleGoalAdded} />
-    </Grid>
+        ): <p>Loading...</p>}
+    </>
   );
 };
 

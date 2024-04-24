@@ -1,26 +1,49 @@
 import { useEffect, useState } from "react";
 import { Match, MatchState, SimplePlayer } from "../../types/Match";
 import { Player } from "../../types/Player";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { collection, doc, getDocs, onSnapshot, updateDoc } from "firebase/firestore";
 import { firestoreDb } from "../../firebase";
 import { Button, Container, Grid, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import AddPlayerDialog from "../../components/AddPlayerDialog";
+import { fromFirestoreMatch } from "../../utils/firestoreUtils";
 
 
 
 interface Props {
-  currentMatch: Match;
-  setCurrentMatch: (match: Match) => void;
+  currentMatchId: string;
+  setCurrentMatchState: (matchState: MatchState) => void;
 }
-const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch }) => {
+const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchState }) => {
   const [availablePlayers, setAvailablePlayers] = useState<SimplePlayer[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<SimplePlayer[]>([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
 
   useEffect(() => {
+    const matchRef = doc(firestoreDb, 'matches', currentMatchId);
+
+    const unsubscribe = onSnapshot(matchRef, (doc) => {
+      if (doc.exists()) {
+        const match = fromFirestoreMatch(doc);
+        setCurrentMatch(match);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [currentMatchId]);
+
+  useEffect(() => {
+    if (!currentMatch) {
+      return;
+    }
+
     const fetchPlayers = async () => {
+      debugger;
       const playersRef = collection(firestoreDb, 'players');
       const querySnapshot = await getDocs(playersRef);
       const fetchedPlayers: Player[] = [];
@@ -34,11 +57,17 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch })
         const bMatches = b.stats?.[currentYear]?.matchesPlayed ?? 0;
         return bMatches - aMatches;
       });
-      setAvailablePlayers(fetchedPlayers.map(p => p as SimplePlayer));
+
+      const allPlayers = [...currentMatch.unassignedPlayers, ...currentMatch.redTeam, ...currentMatch.yellowTeam];
+      const unassignedPlayers = fetchedPlayers
+        .map(p => p as SimplePlayer)
+        .filter(p => !allPlayers.some(ap => ap.id === p.id));
+
+      setAvailablePlayers(unassignedPlayers);
     };
 
     fetchPlayers();
-  }, []);
+  }, [currentMatch]);
 
   useEffect(() => {
     if (!!currentMatch) {
@@ -48,7 +77,7 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch })
       const newSelectedPlayers = [...unassignedPlayers, ...redTeam, ...yellowTeam];
       setSelectedPlayers(newSelectedPlayers);
     }
-  }, [currentMatch])
+  }, [currentMatch]);
 
   const handlePlayerToggle = (player: SimplePlayer) => {
     if (selectedPlayers.includes(player)) {
@@ -63,17 +92,21 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatch, setCurrentMatch })
   const handleConfirmSelection = async () => {
     const updates = {
       unassignedPlayers: selectedPlayers.map(p => p as SimplePlayer),
+      yellowTeam: [],
+      redTeam: [],
       state: MatchState.ChoosingTeams
     }
-    const updatedMatch = {
+    const updatedMatchGeneric = {
       ...currentMatch,
       ...updates
     };
-    currentMatch.unassignedPlayers = selectedPlayers.map(p => p as SimplePlayer);
-    currentMatch.state = MatchState.ChoosingTeams;
-    const matchRef = doc(firestoreDb, 'matches', currentMatch.id!);
+    currentMatch!.unassignedPlayers = selectedPlayers.map(p => p as SimplePlayer);
+    currentMatch!.state = MatchState.ChoosingTeams;
+    const matchRef = doc(firestoreDb, 'matches', currentMatchId);
     await updateDoc(matchRef, updates);
+    const updatedMatch = updatedMatchGeneric as Match;
     setCurrentMatch(updatedMatch);
+    setCurrentMatchState(updatedMatch.state);
   };
 
   function handlePlayerAdded(newPlayer: Player): void {
