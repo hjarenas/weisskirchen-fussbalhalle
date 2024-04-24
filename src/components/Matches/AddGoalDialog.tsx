@@ -28,23 +28,51 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
   const [selectedTeam, setSelectedTeam] = React.useState<Team>(Team.RED);
   const [scorer, setScorer] = React.useState<SimplePlayer | null>(null);
   const [assister, setAssister] = React.useState<SimplePlayer | null>(null);
-  const [ownGoal, setOwnGoal] = React.useState(false);
+  const [isOwnGoal, setIsOwnGoal] = React.useState(false);
+  const [hasAssister, setHasAssister] = React.useState(true);
   const [availablePlayers, setAvailablePlayers] = React.useState<SimplePlayer[]>([]);
+  const [availableAssisters, setAvailableAssisters] = React.useState<SimplePlayer[]>([]);
 
+  // Available players
+  useEffect(() => {
+    let players: SimplePlayer[] = [];
+    if (!isOwnGoal) {
+      players = selectedTeam === Team.RED ? match.redTeam : match.yellowTeam;
+    }
+    else {
+      players = selectedTeam === Team.RED ? match.yellowTeam : match.redTeam;
+    }
+    // set available players sorted by name
+    players = players.sort((a, b) => a.name.localeCompare(b.name));
+    setAvailablePlayers(players);
+
+  }, [isOwnGoal, selectedTeam, match, match.redTeam, match.yellowTeam]);
+
+  // Scorer
   useEffect(() => {
     // Reset the values when the team changes
     const scorer = availablePlayers?.length > 0 ? availablePlayers[0] : null;
-    const assister = availablePlayers?.length > 1 ? availablePlayers[1] : null;
     setScorer(scorer);
-    setAssister(assister);
   }, [availablePlayers, selectedTeam]);
 
   useEffect(() => {
-    if (!ownGoal)
-      setAvailablePlayers(selectedTeam === Team.RED ? match.redTeam : match.yellowTeam);
-    else
-      setAvailablePlayers(selectedTeam === Team.RED ? match.yellowTeam : match.redTeam);
-  }, [ownGoal, selectedTeam, match, match.redTeam, match.yellowTeam]);
+    const possibleAssisters = availablePlayers.filter((player) => player.id !== scorer?.id);
+    setAvailableAssisters(possibleAssisters);
+  }, [scorer, availablePlayers]);
+
+  // Assists
+  useEffect(() => {
+    setHasAssister(!isOwnGoal);
+  }, [isOwnGoal]);
+
+  useEffect(() => {
+    if (!hasAssister) {
+      setAssister(null);
+    } else {
+      const assister = availableAssisters?.length > 1 ? availableAssisters[0] : null;
+      setAssister(assister);
+    }
+  }, [availableAssisters, hasAssister]);
 
 
   const handleAddGoal = async () => {
@@ -52,8 +80,8 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
       const goal: Goal = {
         team: selectedTeam,
         scorer: scorer,
-        assister: assister ?? undefined,
-        ownGoal,
+        assister: assister,
+        ownGoal: isOwnGoal,
       };
       handleGoalAdded(goal);
     }
@@ -72,15 +100,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
   }
 
   const markOwnGoal = (checked: boolean): void => {
-    setOwnGoal(checked);
-    debugger;
-    if (checked) {
-      setAssister(null);
-    }
-    else {
-      const assister = availablePlayers?.length > 1 ? availablePlayers[1] : null;
-      setAssister(assister);
-    }
+    setIsOwnGoal(checked);
   }
 
   return (
@@ -115,7 +135,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
           </FormControl>
         </Box>
 
-        {!ownGoal && (
+        {hasAssister && (
           <Box mb={2}>
             <FormControl fullWidth>
               <InputLabel>Assister</InputLabel>
@@ -123,7 +143,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
                 value={assister?.id ?? ''}
                 onChange={(e) => handleAssisterChanged(e.target.value)}
               >
-                {availablePlayers.map((player) => (
+                {availableAssisters.map((player) => (
                   <MenuItem key={player.id} value={player.id}>
                     {player.name}
                   </MenuItem>
@@ -133,8 +153,15 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({ match, open, onClose, han
           </Box>
         )}
 
+        <Box mb={2}>
+          <FormControlLabel
+            control={<Checkbox checked={hasAssister} onChange={(e) => setHasAssister(e.target.checked)} />}
+            label="Has Assister"
+          />
+        </Box>
+
         <FormControlLabel
-          control={<Checkbox checked={ownGoal} onChange={(e) => markOwnGoal(e.target.checked)} />}
+          control={<Checkbox checked={isOwnGoal} onChange={(e) => markOwnGoal(e.target.checked)} />}
           label="Own Goal"
         />
       </DialogContent>

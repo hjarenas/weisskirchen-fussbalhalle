@@ -1,8 +1,18 @@
 import { Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { Match, Team } from "../../types/Match";
+import { Goal, Match, Team } from "../../types/Match";
 
 interface GridMatchItemProps {
   match: Match;
+}
+
+const getSecondaryText = (goal: Goal) => {
+  if (goal.ownGoal) {
+    return "Own Goal";
+  }
+  if (goal.assister) {
+    return `Assisted by ${goal.assister.name}`;
+  }
+  return "No assist";
 }
 
 const GridMatchItem: React.FC<GridMatchItemProps> = ({ match }) => {
@@ -20,7 +30,7 @@ const GridMatchItem: React.FC<GridMatchItemProps> = ({ match }) => {
           <List>
             {match.goals?.filter(goal => goal.team === Team.RED).map((goal, index) => (
               <ListItem key={index}>
-                <ListItemText primary={goal.scorer.name} secondary={goal.ownGoal ? "Own Goal" : `Assisted by ${goal.assister?.name}`} />
+                <ListItemText primary={goal.scorer.name} secondary={getSecondaryText(goal)} />
               </ListItem>
             ))}
           </List>
@@ -30,7 +40,7 @@ const GridMatchItem: React.FC<GridMatchItemProps> = ({ match }) => {
           <List>
             {match.goals?.filter(goal => goal.team === Team.YELLOW).map((goal, index) => (
               <ListItem key={index}>
-                <ListItemText primary={goal.scorer.name} secondary={goal.ownGoal ? "Own Goal" : `Assisted by ${goal.assister?.name}`} />
+                <ListItemText primary={goal.scorer.name} secondary={getSecondaryText(goal)} />
               </ListItem>
             ))}
           </List>

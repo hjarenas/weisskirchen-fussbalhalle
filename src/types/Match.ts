@@ -21,7 +21,7 @@ export interface Goal {
   team: Team;
   scorer: SimplePlayer;
   ownGoal: boolean;
-  assister?: SimplePlayer;
+  assister: SimplePlayer | null;
 }
 
 interface BaseMatch {
