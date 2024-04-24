@@ -103,7 +103,7 @@ const ChoosingTeamsView: React.FC<ChoosingTeamsViewProps> = ({ currentMatchId, s
           <Button variant='contained' color='secondary' onClick={onGoBack}>Go Back</Button>
         </Grid>
         <Grid item>
-          <Button variant='contained' color='primary' onClick={onStartMatch}>Start Match</Button>
+          <Button variant='contained' color='primary' onClick={onStartMatch} disabled={!currentMatch}>Start Match</Button>
         </Grid>
       </Grid>
 

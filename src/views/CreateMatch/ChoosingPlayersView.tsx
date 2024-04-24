@@ -17,6 +17,7 @@ interface Props {
 }
 const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchState }) => {
   const [availablePlayers, setAvailablePlayers] = useState<SimplePlayer[]>([]);
+  const [fetchedPlayers, setFetchedPlayers] = useState<SimplePlayer[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<SimplePlayer[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
@@ -41,9 +42,11 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchS
     if (!currentMatch) {
       return;
     }
+    setSelectedPlayers([...currentMatch.unassignedPlayers, ...currentMatch.redTeam, ...currentMatch.yellowTeam]);
+  }, [currentMatch]);
 
+  useEffect(() => {
     const fetchPlayers = async () => {
-      debugger;
       const playersRef = collection(firestoreDb, 'players');
       const querySnapshot = await getDocs(playersRef);
       const fetchedPlayers: Player[] = [];
@@ -58,16 +61,18 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchS
         return bMatches - aMatches;
       });
 
-      const allPlayers = [...currentMatch.unassignedPlayers, ...currentMatch.redTeam, ...currentMatch.yellowTeam];
       const unassignedPlayers = fetchedPlayers
         .map(p => p as SimplePlayer)
-        .filter(p => !allPlayers.some(ap => ap.id === p.id));
-
-      setAvailablePlayers(unassignedPlayers);
+      setFetchedPlayers(unassignedPlayers);
     };
 
     fetchPlayers();
   }, [currentMatch]);
+
+  useEffect(() => {
+    const temp = fetchedPlayers.filter(p => !selectedPlayers.some(ap => ap.id === p.id));
+    setAvailablePlayers(temp);
+  }, [fetchedPlayers, selectedPlayers]);
 
   useEffect(() => {
     if (!!currentMatch) {
@@ -124,7 +129,7 @@ const ChoosingPlayersView: React.FC<Props> = ({ currentMatchId, setCurrentMatchS
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" color="primary" onClick={handleConfirmSelection}>
+          <Button variant="contained" color="primary" onClick={handleConfirmSelection} disabled={!currentMatch}>
             Confirm Selection
           </Button>
         </Grid>
