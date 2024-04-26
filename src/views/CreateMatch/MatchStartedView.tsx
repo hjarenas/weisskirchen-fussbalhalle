@@ -141,7 +141,7 @@ const MatchStartedView: React.FC<MatchStartedViewProps> = ({ initialMatchId, bac
         const statsKey = key as keyof PlayerStats;
         currentStats[statsKey] = (currentStats[statsKey] ?? 0) + (updates[statsKey] ?? 0);
       });
-
+      currentStats.points = (currentStats.wins ?? 0) * 3 + (currentStats.ties ?? 0);
       // Write updated stats back to Firestore
       batch.update(playerRef, { [`stats.${currentYear}`]: currentStats });
     }));

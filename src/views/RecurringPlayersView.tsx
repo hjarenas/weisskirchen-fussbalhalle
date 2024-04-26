@@ -2,7 +2,7 @@ import { Button, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/m
 import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
 import { collection, getDocs, query, orderBy, writeBatch } from 'firebase/firestore';
-import { Player, PlayerStats } from '../types/Player';
+import { Player } from '../types/Player';
 import { firestoreDb } from '../firebase';
 import styles from './RecurringPlayersView.module.css';
 import AddPlayerDialog from '../components/AddPlayerDialog';
@@ -34,7 +34,7 @@ const RecurringPlayersView: React.FC = () => {
   const fetchPlayersForCurrentYear = async (): Promise<Player[]> => {
     const currentYear = new Date().getFullYear().toString();
     const playersRef = collection(firestoreDb, 'players');
-    const q = query(playersRef, orderBy(`stats.${currentYear}.matchesPlayed`, 'desc'));
+    const q = query(playersRef, orderBy(`stats.${currentYear}.points`, 'desc'));
     const querySnapshot = await getDocs(q);
 
     const players: Player[] = [];
@@ -68,12 +68,6 @@ const RecurringPlayersView: React.FC = () => {
     const data = await fetchPlayersForCurrentYear();
     setPlayers(data);
     setLoading(false);
-  }
-
-  const calculatePoints = (stats: PlayerStats): number => {
-    const wins = stats?.wins ?? 0;
-    const ties = stats?.ties ?? 0;
-    return wins * 3 + ties
   }
 
   return (
@@ -125,7 +119,7 @@ const RecurringPlayersView: React.FC = () => {
                     <TableCell>{stats?.wins ?? "N/A"}</TableCell>
                     <TableCell>{stats?.ties ?? "N/A"}</TableCell>
                     <TableCell>{stats?.losses ?? "N/A"}</TableCell>
-                    <TableCell>{calculatePoints(stats)}</TableCell>
+                    <TableCell>{stats.points}</TableCell>
                   </TableRow>
                 );
               })}

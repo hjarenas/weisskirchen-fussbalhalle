@@ -8,6 +8,7 @@ export interface PlayerStats {
   wins?: number;
   losses?: number;
   ties?: number;
+  points?: number;
 }
 
 export interface Player {
