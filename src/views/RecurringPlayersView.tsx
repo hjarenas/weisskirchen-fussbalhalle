@@ -2,7 +2,7 @@ import { Button, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/m
 import AddIcon from '@mui/icons-material/Add';
 import React from 'react';
 import { collection, getDocs, query, orderBy, writeBatch } from 'firebase/firestore';
-import { Player } from '../types/Player';
+import { Player, PlayerStats } from '../types/Player';
 import { firestoreDb } from '../firebase';
 import styles from './RecurringPlayersView.module.css';
 import AddPlayerDialog from '../components/AddPlayerDialog';
@@ -70,6 +70,12 @@ const RecurringPlayersView: React.FC = () => {
     setLoading(false);
   }
 
+  const calculatePoints = (stats: PlayerStats): number => {
+    const wins = stats?.wins ?? 0;
+    const ties = stats?.ties ?? 0;
+    return wins * 3 + ties
+  }
+
   return (
     <>
       {loading ? (
@@ -98,10 +104,12 @@ const RecurringPlayersView: React.FC = () => {
                 <TableCell>Name</TableCell>
                 <TableCell>Goals</TableCell>
                 <TableCell>Assists</TableCell>
-                <TableCell>Matches Played</TableCell>
                 <TableCell>Own Goals</TableCell>
+                <TableCell>Matches</TableCell>
                 <TableCell>Wins</TableCell>
+                <TableCell>Ties</TableCell>
                 <TableCell>Losses</TableCell>
+                <TableCell>Points</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -112,10 +120,12 @@ const RecurringPlayersView: React.FC = () => {
                     <TableCell>{player.name}</TableCell>
                     <TableCell>{stats?.goals ?? "N/A"}</TableCell>
                     <TableCell>{stats?.assists ?? "N/A"}</TableCell>
-                    <TableCell>{stats?.matchesPlayed ?? "N/A"}</TableCell>
                     <TableCell>{stats?.ownGoals ?? "N/A"}</TableCell>
+                    <TableCell>{stats?.matchesPlayed ?? "N/A"}</TableCell>
                     <TableCell>{stats?.wins ?? "N/A"}</TableCell>
+                    <TableCell>{stats?.ties ?? "N/A"}</TableCell>
                     <TableCell>{stats?.losses ?? "N/A"}</TableCell>
+                    <TableCell>{calculatePoints(stats)}</TableCell>
                   </TableRow>
                 );
               })}
